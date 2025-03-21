@@ -73,8 +73,8 @@ for rel_path in os.listdir(opt.data_dir):
 test_files.sort()
 
 # Initialize model
-model = RauneNet(channels, 3, opt.num_blocks, opt.num_down, use_att_up=opt.use_att_up).to(DEVICE)
-model.load_state_dict(torch.load(model_path))
+model = RauneNet(channels, 3, opt.num_blocks, opt.num_down, use_att_up=opt.use_att_up, enable_detection=True).to(DEVICE)
+model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
 model.eval()
 logger.info(f"Loaded model from {model_path}")
 
@@ -84,11 +84,15 @@ for path in test_files:
     # prepare input image
     inp_img = transform(Image.open(path))
     inp_img = inp_img.unsqueeze(0).to(DEVICE)
-    # generate enhanced image
+    # generate enhanced image with detection
     s = time.time()
     with torch.no_grad():
-        gen_img = model(inp_img)
+        gen_img, detections = model(inp_img)
     times.append(time.time()-s)
+    
+    # Visualize results
+    from utils.visualization import visualize_detections
+    visualize_detections(gen_img, detections)
     # save output image
     img_sample_paired = torch.cat((inp_img.data, gen_img.data), -1)
     save_image(img_sample_paired, join(opt.result_dir,    opt.test_name, 'paired', basename(path)), normalize=True)

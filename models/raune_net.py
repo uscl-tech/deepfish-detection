@@ -1,4 +1,5 @@
 import torch.nn as nn
+from ultralytics import YOLO
 
 from .resnet import ResnetBlock
 from .cbam import CBAMBlock
@@ -9,7 +10,7 @@ class RauneNet(nn.Module):
     """
     def __init__(self, input_nc, output_nc, n_blocks, n_down, ngf=64,
                  padding_type='reflect', use_dropout=False, use_att_down=True, use_att_up=False,
-                 norm_layer=nn.InstanceNorm2d):
+                 norm_layer=nn.InstanceNorm2d, enable_detection=False):
         """Initializes the RAUNE-Net.
 
         Args:
@@ -62,6 +63,12 @@ class RauneNet(nn.Module):
         ))
         
         self.model = nn.Sequential(*model)
+        
+        # Load YOLOv5 if detection enabled
+        if enable_detection:
+            self.detection_model = YOLO('yolov5s.pt')
+            # Set YOLO to detect only fish class (class 0 in COCO)
+            self.detection_model.classes = [0]
 
     def _down(self, in_channels, out_channels, norm_layer=None, use_att=True, use_dropout=False, dropout_rate=0.5):
         """Attention Down-sampling Block.
@@ -111,5 +118,23 @@ class RauneNet(nn.Module):
 
         Args:
             input: Input images. Type of `torch.Tensor`.
+        Returns:
+            enhanced: Enhanced image
+            detections: Fish detection results (if in detection mode)
         """
-        return self.model(input)
+        enhanced = self.model(input)
+        
+        # Add YOLOv5 detection if in detection mode
+        if hasattr(self, 'detection_model'):
+            # Convert enhanced image to detection format
+            det_input = (enhanced + 1) / 2  # Scale from [-1,1] to [0,1]
+            det_input = det_input.permute(0, 2, 3, 1)  # CHW to HWC
+            det_input = (det_input * 255).byte()  # Scale to [0,255]
+            
+            # Run detection
+            results = self.detection_model(det_input)
+            detections = results.xyxy[0]  # Get detections
+            
+            return enhanced, detections
+        
+        return enhanced

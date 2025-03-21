@@ -71,7 +71,8 @@ test_files.sort()
 
 # Initialize generator of FUnIE_GAN
 model = GeneratorFunieGAN().to(DEVICE)
-model.load_state_dict(torch.load(model_path))
+# Fixed line - added map_location to handle CPU/GPU differences
+model.load_state_dict(torch.load(model_path, map_location=DEVICE))
 model.eval()
 logger.info(f"Loaded model from {model_path}")
 
@@ -88,7 +89,7 @@ for path in test_files:
     times.append(time.time()-s)
     # save output image
     img_sample_paired = torch.cat((inp_img.data, gen_img.data), -1)
-    save_image(img_sample_paired, join(opt.result_dir,    opt.test_name, 'paired', basename(path)), normalize=True)
+    save_image(img_sample_paired, join(opt.result_dir, opt.test_name, 'paired', basename(path)), normalize=True)
     save_image(inp_img.data, os.path.join(opt.result_dir, opt.test_name, 'single/input', basename(path)), normalize=True)
     save_image(gen_img.data, os.path.join(opt.result_dir, opt.test_name, 'single/predicted', basename(path)), normalize=True)
     logger.info(f"Tested: {path}")

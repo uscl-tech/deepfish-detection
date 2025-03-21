@@ -1,13 +1,44 @@
-**/__pycache__/
-runs/
-checkpoints/
-samples/
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+*.egg
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+env/
+venv/
+myenv/
+.env
+.venv
+
+# Data files
+*.csv
+*.h5
+*.npy
+*.pth
+*.pt
+*.bin
+data/
+pretrained/
 results/
-pretrained/RAUNENet/
-pretrained/WaterNet/
-pretrained/UGAN/
-pretrained/FUnIE_GAN/
-*.tar.gz
-psnr_ssim_summary/
-*.ipynb
-paper_figures/*.eps
+Inputimages/
+
+# Logs and databases
+*.log
+*.sqlite
+
+# IDE
+.vscode/
+.idea/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Local development
+*.swp
+*.swo
